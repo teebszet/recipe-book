@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: List all recipes
-The system SHALL provide a paginated list of all recipes, ordered by most recently created first. Each list item SHALL display the recipe title, first photo (if any), tags, and creation date.
+The system SHALL provide a paginated list of all recipes, ordered by most recently created first. Each list item SHALL display the recipe title, first photo (if any), tags, and creation date. other sort types deprioritised: recently created last, A-Z, Z-A.
 
 #### Scenario: Browse recipes with results
 - **WHEN** a user views the recipe listing page

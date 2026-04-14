@@ -1,11 +1,41 @@
 ## ADDED Requirements
 
+### Requirement: Contributor login
+The system SHALL display a "Contributor login" link in the header. Tapping it SHALL open the auth modal. After successful authentication, the system SHALL show write CTAs (Add Recipe FAB, Edit button, Delete button) and display a "Contributor" indicator in the header with a "Logout" option. Write CTAs SHALL NOT be visible to unauthenticated users. Logging out or closing the tab SHALL revert to reader mode.
+
+#### Scenario: Reader mode (default)
+- **WHEN** an unauthenticated user views the homepage or a recipe detail page
+- **THEN** the "Add Recipe" FAB, "Edit" button, and "Delete" button are NOT visible. A "Contributor login" link is shown in the header.
+
+#### Scenario: Contributor logs in
+- **WHEN** a user taps "Contributor login" in the header and enters the correct password in the auth modal
+- **THEN** the auth modal closes, the header shows a "Contributor" indicator with a "Logout" option, and write CTAs become visible on all pages (Add Recipe FAB on homepage, Edit/Delete on detail pages)
+
+#### Scenario: Contributor logs out
+- **WHEN** an authenticated contributor taps "Logout" in the header
+- **THEN** the session is cleared from sessionStorage, write CTAs are hidden, and the header reverts to showing "Contributor login"
+
+#### Scenario: Session expires on tab close
+- **WHEN** a contributor closes the browser tab
+- **THEN** sessionStorage is cleared and the next visit starts in reader mode
+
+### Requirement: Add Recipe entry point from homepage
+The system SHALL display a prominent "Add Recipe" button (FAB) on the homepage, visible only to authenticated contributors. Tapping the button SHALL navigate directly to the recipe creation form.
+
+#### Scenario: Authenticated contributor taps Add Recipe
+- **WHEN** an authenticated contributor taps the "Add Recipe" button on the homepage
+- **THEN** the system navigates directly to the recipe creation form
+
+#### Scenario: FAB not visible to readers
+- **WHEN** an unauthenticated user views the homepage
+- **THEN** the "Add Recipe" FAB is not displayed
+
 ### Requirement: Create a recipe
-The system SHALL allow a contributor to create a new recipe by providing a title, ingredients, instructions, optional photos, and optional tags. The system SHALL standardise the recipe data into a consistent format upon saving.
+The system SHALL allow a contributor to create a new recipe by providing a title, ingredients, instructions, optional photos, and optional tags. The system SHALL standardise the recipe data into a consistent format upon saving. After successful creation, the system SHALL navigate to the new recipe's detail page.
 
 #### Scenario: Successful recipe creation with all fields
 - **WHEN** a contributor submits a recipe with title "Pasta Carbonara", a list of ingredients, ordered instructions, two photos, and tags ["italian", "pasta"]
-- **THEN** the system creates the recipe, stores all fields in the standardised schema, and returns the created recipe with a unique ID
+- **THEN** the system creates the recipe, stores all fields in the standardised schema, and navigates to the new recipe's detail page
 
 #### Scenario: Minimal recipe creation
 - **WHEN** a contributor submits a recipe with only a title and at least one ingredient and one instruction step
@@ -13,7 +43,7 @@ The system SHALL allow a contributor to create a new recipe by providing a title
 
 #### Scenario: Recipe creation with missing required fields
 - **WHEN** a contributor submits a recipe without a title, or without any ingredients, or without any instructions
-- **THEN** the system rejects the submission and returns validation errors indicating which fields are missing
+- **THEN** the system rejects the submission and displays inline validation errors indicating which fields are missing
 
 ### Requirement: View a single recipe
 The system SHALL allow any user to view the full details of a recipe by its ID, including title, description, all ingredients with quantities and units, ordered instructions, photos, and tags.
@@ -26,12 +56,23 @@ The system SHALL allow any user to view the full details of a recipe by its ID, 
 - **WHEN** a user requests a recipe with an ID that does not exist
 - **THEN** the system returns a not-found error
 
+### Requirement: Edit recipe entry point from detail page
+The system SHALL display an "Edit" button on the recipe detail page, visible only to authenticated contributors. Tapping the button SHALL navigate to the recipe form pre-filled with the recipe's current data.
+
+#### Scenario: Authenticated contributor taps Edit
+- **WHEN** an authenticated contributor taps "Edit" on a recipe detail page
+- **THEN** the system navigates to the recipe form pre-filled with all existing recipe data
+
+#### Scenario: Edit button not visible to readers
+- **WHEN** an unauthenticated user views a recipe detail page
+- **THEN** the "Edit" button is not displayed
+
 ### Requirement: Update a recipe
-The system SHALL allow a contributor to update any field of an existing recipe. Partial updates SHALL be supported — only the provided fields are changed.
+The system SHALL allow a contributor to update any field of an existing recipe. Partial updates SHALL be supported — only the provided fields are changed. After successful update, the system SHALL navigate back to the recipe detail page.
 
 #### Scenario: Update recipe title
-- **WHEN** a contributor updates the title of an existing recipe
-- **THEN** the system saves the new title and the updatedAt timestamp is refreshed
+- **WHEN** a contributor updates the title of an existing recipe and saves
+- **THEN** the system saves the new title, refreshes the updatedAt timestamp, and navigates back to the detail page
 
 #### Scenario: Add a photo to an existing recipe
 - **WHEN** a contributor adds a photo to an existing recipe
@@ -40,6 +81,21 @@ The system SHALL allow a contributor to update any field of an existing recipe. 
 #### Scenario: Update non-existent recipe
 - **WHEN** a contributor attempts to update a recipe that does not exist
 - **THEN** the system returns a not-found error
+
+### Requirement: Delete recipe entry point from detail page
+The system SHALL display a "Delete" button on the recipe detail page, visible only to authenticated contributors. Tapping the button SHALL show a confirmation dialog ("Are you sure you want to delete this recipe?"). After confirmed deletion, the system SHALL navigate back to the homepage.
+
+#### Scenario: Authenticated contributor deletes a recipe
+- **WHEN** an authenticated contributor taps "Delete" on a recipe detail page and confirms
+- **THEN** the system deletes the recipe and its photos, and navigates to the homepage
+
+#### Scenario: User cancels deletion
+- **WHEN** a contributor taps "Delete" and then cancels the confirmation dialog
+- **THEN** the recipe is not deleted and the user remains on the detail page
+
+#### Scenario: Delete button not visible to readers
+- **WHEN** an unauthenticated user views a recipe detail page
+- **THEN** the "Delete" button is not displayed
 
 ### Requirement: Delete a recipe
 The system SHALL allow a contributor to delete a recipe. Deleting a recipe SHALL also remove its associated photos from storage.

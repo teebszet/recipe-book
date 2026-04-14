@@ -88,7 +88,7 @@ Photo:
 
 Ingredients and instructions are stored as JSON columns for flexibility — no need to query individual ingredients at the SQL level for the initial search approach.
 
-### 7. Basic Auth: Shared password via environment variable
+### 7. Basic Auth: Shared password with contributor login
 
 A single shared password protects all write operations (create, update, delete). No user accounts, no registration — just one password that all contributors know.
 
@@ -100,10 +100,14 @@ A single shared password protects all write operations (create, update, delete).
 - GET endpoints remain fully public — no auth needed to browse or search
 
 **Frontend flow:**
-- On first write action (e.g. clicking "Add Recipe"), a simple password modal appears
-- Password is stored in `sessionStorage` (cleared when the browser tab closes)
-- All subsequent write requests attach the password as a Bearer token automatically
-- If a 401 is returned (wrong password), the modal reappears
+- The app has two modes: **reader** (default) and **contributor** (authenticated)
+- In reader mode, write CTAs (Add Recipe, Edit, Delete) are hidden. A "Contributor login" link appears in the header.
+- Tapping "Contributor login" opens the auth modal (password prompt)
+- After successful authentication, password is stored in `sessionStorage` (cleared when tab closes)
+- In contributor mode: header shows a "Contributor" indicator with "Logout" option, and write CTAs appear on all pages (Add Recipe FAB on homepage, Edit/Delete on recipe detail)
+- All write requests automatically attach the password as a Bearer token
+- If a 401 is returned (wrong/expired password), the auth modal reappears and the app reverts to reader mode
+- Logout clears sessionStorage and reverts to reader mode
 
 **First deploy:**
 - Admin sets the password via platform secrets: `fly secrets set ADMIN_PASSWORD=<chosen-password>`
@@ -111,6 +115,8 @@ A single shared password protects all write operations (create, update, delete).
 - Password can be changed at any time by updating the secret and restarting
 
 **Alternatives considered:**
+- Per-action auth modal (prompt on each write action): more friction, confusing UX — contributor has to authenticate repeatedly or encounter surprise modals.
+- Toggle switch for read/write mode: implies persistent state, confusing for casual users.
 - HTTP Basic Auth (browser-native prompt): works but the UX is poor and can't be styled.
 - JWT/session-based auth: overkill for a single shared credential.
 - OAuth/social login: way too complex for this use case.

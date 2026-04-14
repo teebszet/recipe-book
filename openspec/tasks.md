@@ -37,22 +37,27 @@
 - [ ] 5.2 Use constant-time string comparison in auth middleware
 - [ ] 5.3 Fail-closed: refuse all write requests if `ADMIN_PASSWORD` is not set
 - [ ] 5.4 Apply auth middleware to all write API routes (POST, PUT, DELETE)
-- [ ] 5.5 Build password modal UI: prompt on first write action, store password in sessionStorage
-- [ ] 5.6 Auto-attach Bearer token to all subsequent write requests from frontend
-- [ ] 5.7 Re-prompt password modal on 401 response (wrong/expired password)
-- [ ] 5.8 Ensure all DB queries use Prisma typed query builder, no raw SQL with user input
-- [ ] 5.9 Audit all components: verify no dangerouslySetInnerHTML on user-provided content
+- [ ] 5.5 Build "Contributor login" link in header that opens auth modal
+- [ ] 5.6 Build auth modal UI: password prompt, error state for incorrect password
+- [ ] 5.7 Store password in sessionStorage on successful auth
+- [ ] 5.8 Show "Contributor" indicator and "Logout" option in header when authenticated
+- [ ] 5.9 Conditionally show/hide write CTAs (Add Recipe FAB, Edit, Delete) based on auth state
+- [ ] 5.10 Auto-attach Bearer token to all write requests from frontend
+- [ ] 5.11 On 401 response: clear session, revert to reader mode, re-show auth modal
+- [ ] 5.12 Logout: clear sessionStorage, hide write CTAs, revert header to "Contributor login"
+- [ ] 5.13 Ensure all DB queries use Prisma typed query builder, no raw SQL with user input
+- [ ] 5.14 Audit all components: verify no dangerouslySetInnerHTML on user-provided content
 
 ## 6. Frontend - Layout & Navigation
 
-- [ ] 6.1 Create root layout with header, search bar, and navigation
+- [ ] 6.1 Create root layout with header (search bar, contributor login link) and responsive structure
 - [ ] 6.2 Style global layout with clean, minimal design (CSS modules or Tailwind)
 - [ ] 6.3 Build responsive layout that works on mobile and desktop
 
 ## 7. Frontend - Recipe Browsing
 
 - [ ] 7.1 Build home page with recipe grid/list (title, thumbnail, tags, date)
-- [ ] 7.2 Implement pagination or infinite scroll for recipe listing
+- [ ] 7.2 Implement pagination or infinite scroll for recipe listing (newest first by default)
 - [ ] 7.3 Build recipe detail page (photos, ingredients, instructions, tags)
 - [ ] 7.4 Build empty state for when no recipes exist
 - [ ] 7.5 Implement "Recently Viewed" section on home page using localStorage
@@ -85,9 +90,10 @@
 - [ ] 10.7 Unit test photo upload validation (size limit, magic bytes, UUID filename generation)
 - [ ] 10.8 Unit test tag management (creation, dedup, lowercase normalisation)
 - [ ] 10.9 Unit test recently-viewed localStorage logic (add, dedup, eviction at 20)
-- [ ] 10.10 Integration test: full recipe CRUD cycle against test DB with auth
-- [ ] 10.11 Integration test: search returns correct results from seeded test data
-- [ ] 10.12 Integration test: unauthenticated write requests return 401
+- [ ] 10.10 Unit test contributor login flow (auth state, CTA visibility, logout)
+- [ ] 10.11 Integration test: full recipe CRUD cycle against test DB with auth
+- [ ] 10.12 Integration test: search returns correct results from seeded test data
+- [ ] 10.13 Integration test: unauthenticated write requests return 401
 
 ## 11. Deployment (Fly.io)
 
@@ -102,8 +108,8 @@
 
 ## 12. Polish & Verification
 
-- [ ] 12.1 Test full CRUD flow end-to-end with auth (create, view, edit, delete recipe)
+- [ ] 12.1 Test full CRUD flow end-to-end with auth (contributor login, create, view, edit, delete recipe)
 - [ ] 12.2 Test search by title and by ingredients
 - [ ] 12.3 Test recently viewed tracking across page navigations
 - [ ] 12.4 Verify responsive layout on mobile viewport sizes
-- [ ] 12.5 Verify auth flow: password prompt appears, wrong password rejected, correct password works
+- [ ] 12.5 Verify auth flow: contributor login appears, wrong password rejected, correct password shows CTAs, logout hides CTAs
