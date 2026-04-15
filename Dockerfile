@@ -18,8 +18,10 @@ COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
 COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=build /app/src/generated ./src/generated
+COPY --from=build /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
+COPY --from=build /app/node_modules/bindings ./node_modules/bindings
+COPY --from=build /app/node_modules/file-uri-to-path ./node_modules/file-uri-to-path
 
 EXPOSE 3000
 ENV PORT=3000
