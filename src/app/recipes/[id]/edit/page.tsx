@@ -15,6 +15,7 @@ export default async function EditRecipePage({
     where: { id },
     include: {
       tags: { include: { tag: true } },
+      photos: { orderBy: { sortOrder: "asc" } },
     },
   });
 
@@ -45,6 +46,11 @@ export default async function EditRecipePage({
           ingredients,
           instructions,
           tags,
+          photos: recipe.photos.map((p) => ({
+            id: p.id,
+            url: p.url.replace(/^\/uploads\//, "/api/uploads/"),
+            alt: p.alt,
+          })),
         }}
       />
     </>

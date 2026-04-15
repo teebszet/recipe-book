@@ -22,7 +22,7 @@ export function formatRecipeResponse(recipe: RecipeWithRelations) {
     tags: recipe.tags.map((rt: RecipeWithRelations["tags"][number]) => rt.tag.name),
     photos: recipe.photos.map((p: RecipeWithRelations["photos"][number]) => ({
       id: p.id,
-      url: p.url,
+      url: p.url.replace(/^\/uploads\//, "/api/uploads/"),
       alt: p.alt,
     })),
   };
@@ -36,7 +36,7 @@ export function formatRecipeListItem(recipe: RecipeWithThumbnail) {
     tags: recipe.tags.map((rt: RecipeWithThumbnail["tags"][number]) => rt.tag.name),
     photos: recipe.photos.map((p: RecipeWithThumbnail["photos"][number]) => ({
       id: p.id,
-      url: p.url,
+      url: p.url.replace(/^\/uploads\//, "/api/uploads/"),
       alt: p.alt,
     })),
   };

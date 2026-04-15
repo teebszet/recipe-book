@@ -39,7 +39,7 @@ export default async function RecipeDetailPage({
       <TrackRecentlyViewed
         id={recipe.id}
         title={recipe.title}
-        thumbnail={recipe.photos[0]?.url || null}
+        thumbnail={recipe.photos[0]?.url.replace(/^\/uploads\//, "/api/uploads/") || null}
       />
 
       {recipe.photos.length > 0 && (
@@ -50,7 +50,7 @@ export default async function RecipeDetailPage({
               className="relative flex-shrink-0 w-full max-w-2xl aspect-[16/10] rounded-[1.5rem] overflow-hidden"
             >
               <Image
-                src={photo.url}
+                src={photo.url.replace(/^\/uploads\//, "/api/uploads/")}
                 alt={photo.alt || recipe.title}
                 fill
                 className="object-cover"

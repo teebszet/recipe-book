@@ -2,7 +2,6 @@ import { prisma } from "@/lib/db";
 import { RecipeCard } from "@/components/RecipeCard";
 import { RecentlyViewed } from "@/components/RecentlyViewed";
 import { AddRecipeFab } from "@/components/AddRecipeFab";
-import { HomeSearch } from "@/components/HomeSearch";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +17,6 @@ export default async function HomePage() {
 
   return (
     <>
-      <HomeSearch />
       <RecentlyViewed />
 
       {recipes.length === 0 ? (
@@ -39,7 +37,7 @@ export default async function HomePage() {
               thumbnail={
                 recipe.photos[0]
                   ? {
-                      url: recipe.photos[0].url,
+                      url: recipe.photos[0].url.replace(/^\/uploads\//, "/api/uploads/"),
                       alt: recipe.photos[0].alt,
                     }
                   : null

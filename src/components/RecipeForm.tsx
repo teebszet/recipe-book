@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 
@@ -16,6 +16,12 @@ interface Instruction {
   text: string;
 }
 
+interface ExistingPhoto {
+  id: string;
+  url: string;
+  alt: string | null;
+}
+
 interface RecipeFormProps {
   recipeId?: string;
   initialData?: {
@@ -24,6 +30,7 @@ interface RecipeFormProps {
     ingredients: Ingredient[];
     instructions: Instruction[];
     tags: string[];
+    photos?: ExistingPhoto[];
   };
 }
 
@@ -58,10 +65,16 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>(initialData?.tags || []);
   const [tagSuggestions, setTagSuggestions] = useState<string[]>([]);
+  const [existingPhotos, setExistingPhotos] = useState<ExistingPhoto[]>(
+    initialData?.photos || []
+  );
   const [photos, setPhotos] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [errors, setErrors] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const ingredientRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const instructionRefs = useRef<(HTMLTextAreaElement | null)[]>([]);
 
   useEffect(() => {
     if (tagInput.length < 1) {
@@ -78,9 +91,15 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
       .catch(() => setTagSuggestions([]));
   }, [tagInput, tags]);
 
-  function addIngredient() {
-    setIngredients([...ingredients, emptyIngredient()]);
-  }
+  const addIngredient = useCallback(() => {
+    setIngredients((prev) => [...prev, emptyIngredient()]);
+    // Focus new row's name field after render
+    setTimeout(() => {
+      const refs = ingredientRefs.current;
+      const last = refs[refs.length - 1];
+      if (last) last.focus();
+    }, 0);
+  }, []);
 
   function removeIngredient(index: number) {
     if (ingredients.length <= 1) return;
@@ -97,12 +116,35 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
     setIngredients(updated);
   }
 
-  function addInstruction() {
-    setInstructions([
-      ...instructions,
-      emptyInstruction(instructions.length + 1),
-    ]);
+  function moveIngredient(index: number, direction: -1 | 1) {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= ingredients.length) return;
+    const updated = [...ingredients];
+    [updated[index], updated[newIndex]] = [updated[newIndex], updated[index]];
+    setIngredients(updated);
   }
+
+  function handleIngredientKeyDown(
+    e: React.KeyboardEvent,
+    index: number
+  ) {
+    if (e.key === "Enter" && index === ingredients.length - 1) {
+      e.preventDefault();
+      addIngredient();
+    }
+  }
+
+  const addInstruction = useCallback(() => {
+    setInstructions((prev) => [
+      ...prev,
+      emptyInstruction(prev.length + 1),
+    ]);
+    setTimeout(() => {
+      const refs = instructionRefs.current;
+      const last = refs[refs.length - 1];
+      if (last) last.focus();
+    }, 0);
+  }, []);
 
   function removeInstruction(index: number) {
     if (instructions.length <= 1) return;
@@ -128,6 +170,20 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
     );
   }
 
+  function handleInstructionKeyDown(
+    e: React.KeyboardEvent,
+    index: number
+  ) {
+    if (
+      e.key === "Enter" &&
+      e.shiftKey &&
+      index === instructions.length - 1
+    ) {
+      e.preventDefault();
+      addInstruction();
+    }
+  }
+
   function addTag(tag: string) {
     const normalised = tag.trim().toLowerCase();
     if (normalised && !tags.includes(normalised)) {
@@ -141,17 +197,53 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
     setTags(tags.filter((t) => t !== tag));
   }
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files || []);
-    setPhotos((prev) => [...prev, ...files]);
-    const newPreviews = files.map((f) => URL.createObjectURL(f));
-    setPreviews((prev) => [...prev, ...newPreviews]);
+    if (!files.length) return;
+
+    if (recipeId) {
+      // Upload immediately for existing recipes
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await apiFetch(`/api/recipes/${recipeId}/photos`, {
+          method: "POST",
+          body: formData,
+        });
+        if (res.ok) {
+          const photo = await res.json();
+          setExistingPhotos((prev) => [...prev, photo]);
+        }
+      }
+    } else {
+      setPhotos((prev) => [...prev, ...files]);
+      const newPreviews = files.map((f) => URL.createObjectURL(f));
+      setPreviews((prev) => [...prev, ...newPreviews]);
+    }
+    // Reset file input
+    e.target.value = "";
+  }
+
+  async function removeExistingPhoto(photoId: string) {
+    const res = await apiFetch(`/api/photos/${photoId}`, { method: "DELETE" });
+    if (res.ok) {
+      setExistingPhotos((prev) => prev.filter((p) => p.id !== photoId));
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErrors([]);
     setSaving(true);
+
+    // Include any pending tag that wasn't confirmed with Enter
+    const finalTags = [...tags];
+    if (tagInput.trim()) {
+      const pending = tagInput.trim().toLowerCase();
+      if (!finalTags.includes(pending)) {
+        finalTags.push(pending);
+      }
+    }
 
     const body = {
       title,
@@ -163,7 +255,7 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
         notes: ing.notes || null,
       })),
       instructions,
-      tags,
+      tags: finalTags,
     };
 
     const url = recipeId ? `/api/recipes/${recipeId}` : "/api/recipes";
@@ -203,7 +295,7 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
     "w-full px-4 py-3 rounded-lg bg-surface-container-highest text-on-surface placeholder:text-outline focus:bg-white focus:outline-none focus:ring-1 focus:ring-outline/30 transition-colors";
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-8 max-w-3xl">
       {errors.length > 0 && (
         <div className="bg-error/10 rounded-lg p-4">
           {errors.map((err, i) => (
@@ -216,7 +308,7 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
 
       <div>
         <label className="block font-serif text-lg text-on-surface mb-2">
-          Title
+          Title <span className="text-error text-sm">*</span>
         </label>
         <input
           type="text"
@@ -243,7 +335,7 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="font-serif text-lg text-on-surface">
-            Ingredients
+            Ingredients <span className="text-error text-sm">*</span>
           </label>
           <button
             type="button"
@@ -253,47 +345,79 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
             + Add ingredient
           </button>
         </div>
+        <p className="text-xs text-on-surface-variant mb-3">
+          Press Enter on the last row to add another
+        </p>
         <div className="space-y-3">
           {ingredients.map((ing, i) => (
-            <div key={i} className="flex gap-2 items-start">
-              <input
-                type="text"
-                value={ing.name}
-                onChange={(e) => updateIngredient(i, "name", e.target.value)}
-                placeholder="Name"
-                className={`flex-1 ${inputClass}`}
-              />
-              <input
-                type="text"
-                value={ing.quantity}
-                onChange={(e) => updateIngredient(i, "quantity", e.target.value)}
-                placeholder="Qty"
-                className={`w-20 ${inputClass}`}
-              />
-              <input
-                type="text"
-                value={ing.unit}
-                onChange={(e) => updateIngredient(i, "unit", e.target.value)}
-                placeholder="Unit"
-                className={`w-20 ${inputClass}`}
-              />
-              <input
-                type="text"
-                value={ing.notes}
-                onChange={(e) => updateIngredient(i, "notes", e.target.value)}
-                placeholder="Notes"
-                className={`w-32 ${inputClass}`}
-              />
-              {ingredients.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeIngredient(i)}
-                  className="text-error text-lg px-2 mt-3"
-                  aria-label="Remove ingredient"
-                >
-                  ×
-                </button>
-              )}
+            <div key={i} className="flex flex-col sm:flex-row gap-2">
+              <div className="flex gap-2 items-start flex-1 min-w-0">
+                <input
+                  ref={(el) => { ingredientRefs.current[i] = el; }}
+                  type="text"
+                  value={ing.name}
+                  onChange={(e) => updateIngredient(i, "name", e.target.value)}
+                  onKeyDown={(e) => handleIngredientKeyDown(e, i)}
+                  placeholder="Ingredient name"
+                  className={`flex-[3] min-w-0 ${inputClass}`}
+                />
+              </div>
+              <div className="flex gap-2 items-start">
+                <input
+                  type="text"
+                  value={ing.quantity}
+                  onChange={(e) => updateIngredient(i, "quantity", e.target.value)}
+                  onKeyDown={(e) => handleIngredientKeyDown(e, i)}
+                  placeholder="Qty"
+                  className={`w-20 ${inputClass}`}
+                />
+                <input
+                  type="text"
+                  value={ing.unit}
+                  onChange={(e) => updateIngredient(i, "unit", e.target.value)}
+                  onKeyDown={(e) => handleIngredientKeyDown(e, i)}
+                  placeholder="Unit"
+                  className={`w-20 ${inputClass}`}
+                />
+                <input
+                  type="text"
+                  value={ing.notes}
+                  onChange={(e) => updateIngredient(i, "notes", e.target.value)}
+                  onKeyDown={(e) => handleIngredientKeyDown(e, i)}
+                  placeholder="Notes"
+                  className={`w-28 sm:w-32 ${inputClass}`}
+                />
+                <div className="flex flex-col gap-1 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => moveIngredient(i, -1)}
+                    disabled={i === 0}
+                    className="text-on-surface-variant disabled:opacity-30 text-sm"
+                    aria-label="Move up"
+                  >
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveIngredient(i, 1)}
+                    disabled={i === ingredients.length - 1}
+                    className="text-on-surface-variant disabled:opacity-30 text-sm"
+                    aria-label="Move down"
+                  >
+                    ↓
+                  </button>
+                </div>
+                {ingredients.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeIngredient(i)}
+                    className="text-error text-lg px-1 mt-3"
+                    aria-label="Remove ingredient"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -302,7 +426,7 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
       <div>
         <div className="flex items-center justify-between mb-2">
           <label className="font-serif text-lg text-on-surface">
-            Instructions
+            Instructions <span className="text-error text-sm">*</span>
           </label>
           <button
             type="button"
@@ -312,6 +436,9 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
             + Add step
           </button>
         </div>
+        <p className="text-xs text-on-surface-variant mb-3">
+          Press Shift+Enter on the last step to add another
+        </p>
         <div className="space-y-3">
           {instructions.map((step, i) => (
             <div key={i} className="flex gap-2 items-start">
@@ -319,8 +446,10 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
                 {step.stepNumber}
               </span>
               <textarea
+                ref={(el) => { instructionRefs.current[i] = el; }}
                 value={step.text}
                 onChange={(e) => updateInstruction(i, e.target.value)}
+                onKeyDown={(e) => handleInstructionKeyDown(e, i)}
                 placeholder={`Step ${step.stepNumber}`}
                 rows={2}
                 className={`flex-1 ${inputClass}`}
@@ -412,32 +541,54 @@ export function RecipeForm({ recipeId, initialData }: RecipeFormProps) {
         </div>
       </div>
 
-      {!recipeId && (
-        <div>
-          <label className="block font-serif text-lg text-on-surface mb-2">
-            Photos
-          </label>
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            onChange={handlePhotoChange}
-            className="text-sm text-on-surface-variant"
-          />
-          {previews.length > 0 && (
-            <div className="flex gap-3 mt-3 flex-wrap">
-              {previews.map((src, i) => (
+      <div>
+        <label className="block font-serif text-lg text-on-surface mb-2">
+          Photos
+        </label>
+        {existingPhotos.length > 0 && (
+          <div className="flex gap-3 mb-3 flex-wrap">
+            {existingPhotos.map((photo) => (
+              <div key={photo.id} className="relative">
                 <img
-                  key={i}
-                  src={src}
-                  alt={`Preview ${i + 1}`}
+                  src={photo.url}
+                  alt={photo.alt || "Recipe photo"}
                   className="w-24 h-24 object-cover rounded-lg"
                 />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+                <button
+                  type="button"
+                  onClick={() => removeExistingPhoto(photo.id)}
+                  className="absolute -top-2 -right-2 w-6 h-6 bg-error text-white rounded-full flex items-center justify-center text-xs leading-none"
+                  aria-label="Remove photo"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          multiple
+          onChange={handlePhotoChange}
+          className="text-sm text-on-surface-variant"
+        />
+        <p className="text-xs text-on-surface-variant mt-1">
+          JPEG, PNG, or WebP — max 10MB
+        </p>
+        {previews.length > 0 && (
+          <div className="flex gap-3 mt-3 flex-wrap">
+            {previews.map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt={`Preview ${i + 1}`}
+                className="w-24 h-24 object-cover rounded-lg"
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <button
         type="submit"
