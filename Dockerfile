@@ -23,9 +23,8 @@ COPY --from=build /app/src/generated ./src/generated
 COPY --from=build /app/node_modules/better-sqlite3 ./node_modules/better-sqlite3
 COPY --from=build /app/node_modules/bindings ./node_modules/bindings
 COPY --from=build /app/node_modules/file-uri-to-path ./node_modules/file-uri-to-path
-COPY --from=build /app/node_modules/prisma ./node_modules/prisma
-COPY --from=build /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=build /app/start.sh ./start.sh
+COPY --from=build /app/migrate.js ./migrate.js
 
 EXPOSE 3000
 ENV PORT=3000

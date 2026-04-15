@@ -1,4 +1,3 @@
 #!/bin/sh
-# Run database migration on startup (creates DB if it doesn't exist)
-npx prisma db push --schema ./prisma/schema.prisma --skip-generate
+node migrate.js
 exec node server.js
