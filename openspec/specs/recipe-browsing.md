@@ -1,11 +1,11 @@
 ## ADDED Requirements
 
 ### Requirement: List all recipes
-The system SHALL provide a paginated list of all recipes, ordered by most recently created first. Each list item SHALL display the recipe title, first photo (if any), tags, and creation date. other sort types deprioritised: recently created last, A-Z, Z-A.
+The system SHALL provide a paginated list of all recipes, ordered by most recently created first. Each list item SHALL display the recipe title, first photo (if any), tags, and creation date. The homepage SHALL NOT include a separate hero search bar — the header search bar serves as the single search entry point across all pages. Other sort types deprioritised: recently created last, A-Z, Z-A.
 
 #### Scenario: Browse recipes with results
 - **WHEN** a user views the recipe listing page
-- **THEN** the system displays recipes in reverse chronological order with title, thumbnail photo, tags, and date
+- **THEN** the system displays recipes in reverse chronological order with title, thumbnail photo, tags, and date. No hero search bar is displayed.
 
 #### Scenario: Browse recipes with no recipes in the system
 - **WHEN** a user views the recipe listing page and no recipes exist
@@ -51,3 +51,10 @@ The system SHALL display a "Recently Viewed" section on the home page showing th
 #### Scenario: User has no recently viewed recipes
 - **WHEN** a user visits the home page with no recently viewed history
 - **THEN** the "Recently Viewed" section is not displayed
+
+### Requirement: Add Recipe FAB vertical centering
+The Add Recipe FAB "+" icon SHALL be vertically and horizontally centered within the circular button.
+
+#### Scenario: FAB renders correctly
+- **WHEN** an authenticated contributor views any page with the FAB
+- **THEN** the "+" character is visually centered in the circle (no baseline offset)

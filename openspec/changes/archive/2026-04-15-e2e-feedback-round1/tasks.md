@@ -39,7 +39,7 @@
 ## 7. Deploy & Verify
 
 - [x] 7.1 Build and run tests locally
-- [ ] 7.2 Deploy to Fly.io
-- [ ] 7.3 Verify photo loading works on deployed app
-- [ ] 7.4 Verify tag saving works
-- [ ] 7.5 Verify form improvements on mobile viewport
+- [x] 7.2 Deploy to Fly.io
+- [x] 7.3 Verify photo loading works on deployed app
+- [x] 7.4 Verify tag saving works
+- [x] 7.5 Verify form improvements on mobile viewport
