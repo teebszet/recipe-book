@@ -12,39 +12,39 @@
 
 ## 3. Phase 1 — JSON-LD parser
 
-- [ ] 3.1 Implement `src/lib/import/jsonld.ts`: `extractRecipe(html: string): Recipe | null` that finds all `<script type="application/ld+json">` blocks, parses each (skipping malformed), searches each parsed value for `@type: Recipe` directly / in array / under `@graph`, returns the first match
-- [ ] 3.2 Implement field mapping: `name → title`, `description → description`, `recipeIngredient[] → ingredients[]` via `src/lib/ingredients.ts` parser (with whole-string-as-name fallback on parse failure), `recipeInstructions → instructions[]` (handle string, array of strings, array of `HowToStep`), `recipeCategory + keywords → tags[]` (lowercase, dedup)
-- [ ] 3.3 Unit tests with three real-site HTML fixtures (capture from a big-name recipe site, a WordPress food blog, and `mykoreankitchen.com`) checked into `src/lib/import/__fixtures__/`
-- [ ] 3.4 Unit test edge cases: malformed JSON-LD block (skipped, parser continues), `@graph` containing a Recipe, multiple JSON-LD blocks where only the second has the Recipe
+- [x] 3.1 Implement `src/lib/import/jsonld.ts`: `extractRecipe(html: string): Recipe | null` that finds all `<script type="application/ld+json">` blocks, parses each (skipping malformed), searches each parsed value for `@type: Recipe` directly / in array / under `@graph`, returns the first match
+- [x] 3.2 Implement field mapping: `name → title`, `description → description`, `recipeIngredient[] → ingredients[]` via `src/lib/ingredients.ts` parser (with whole-string-as-name fallback on parse failure), `recipeInstructions → instructions[]` (handle string, array of strings, array of `HowToStep`), `recipeCategory + keywords → tags[]` (lowercase, dedup)
+- [x] 3.3 Unit tests with three real-site HTML fixtures (capture from a big-name recipe site, a WordPress food blog, and `mykoreankitchen.com`) checked into `src/lib/import/__fixtures__/`
+- [x] 3.4 Unit test edge cases: malformed JSON-LD block (skipped, parser continues), `@graph` containing a Recipe, multiple JSON-LD blocks where only the second has the Recipe
 
 ## 4. Phase 1 — Open Graph fallback
 
-- [ ] 4.1 Implement `src/lib/import/og.ts`: `extractOpenGraph(html: string): { title, description, image } | null` reading `og:title`/`og:description`/`og:image` (with `<title>` fallback for title)
-- [ ] 4.2 Unit tests: page with all OG tags, page with only `og:title`, page with no OG/title at all (returns null)
+- [x] 4.1 Implement `src/lib/import/og.ts`: `extractOpenGraph(html: string): { title, description, image } | null` reading `og:title`/`og:description`/`og:image` (with `<title>` fallback for title)
+- [x] 4.2 Unit tests: page with all OG tags, page with only `og:title`, page with no OG/title at all (returns null)
 
 ## 5. Phase 1 — Image download
 
-- [ ] 5.1 Wire image download into the import flow: when JSON-LD `image` or `og:image` resolves, call `safeFetchBytes` with `image/*` content-type allowlist and 10MB cap
-- [ ] 5.2 Pass the bytes through the existing photo upload validators in `src/lib/upload.ts` (magic-byte check, UUID rename); persist a `Photo` row and return `{ id, url }` to the caller
-- [ ] 5.3 If image download or validation fails, the import succeeds without the photo — log a warning, return the rest of the parsed recipe, no error to the contributor
-- [ ] 5.4 Test: successful JPEG download, oversized image rejected, magic-byte mismatch rejected, network failure does not break the import
+- [x] 5.1 Wire image download into the import flow: when JSON-LD `image` or `og:image` resolves, call `safeFetchBytes` with `image/*` content-type allowlist and 10MB cap
+- [x] 5.2 Pass the bytes through the existing photo upload validators in `src/lib/upload.ts` (magic-byte check, UUID rename); persist a `Photo` row and return `{ id, url }` to the caller
+- [x] 5.3 If image download or validation fails, the import succeeds without the photo — log a warning, return the rest of the parsed recipe, no error to the contributor
+- [x] 5.4 Test: successful JPEG download, oversized image rejected, magic-byte mismatch rejected, network failure does not break the import
 
 ## 6. Phase 1 — Orchestrator + endpoint
 
-- [ ] 6.1 Implement `src/lib/import/index.ts` exporting `importFromUrl(url): Promise<ImportResult>` that: detects host (Instagram → route to phase-2 module if present, else generic), fetches HTML via `safeFetchText` with `text/html` allowlist, runs JSON-LD extractor, runs OG fallback if no JSON-LD recipe, downloads image, returns `ImportResult` shaped to feed `RecipeForm` `initialData`
-- [ ] 6.2 Implement `src/app/api/import/route.ts` `POST` handler: auth check (401 if missing), JSON body parse, URL syntactic validation, call `importFromUrl`, return result
-- [ ] 6.3 Endpoint integration test (fixtures-based): valid URL → 200 with mapped data; bad URL → 4xx; unauthed → 401
+- [x] 6.1 Implement `src/lib/import/index.ts` exporting `importFromUrl(url): Promise<ImportResult>` that: detects host (Instagram → route to phase-2 module if present, else generic), fetches HTML via `safeFetchText` with `text/html` allowlist, runs JSON-LD extractor, runs OG fallback if no JSON-LD recipe, downloads image, returns `ImportResult` shaped to feed `RecipeForm` `initialData`
+- [x] 6.2 Implement `src/app/api/import/route.ts` `POST` handler: auth check (401 if missing), JSON body parse, URL syntactic validation, call `importFromUrl`, return result
+- [x] 6.3 Endpoint integration test (fixtures-based): valid URL → 200 with mapped data; bad URL → 4xx; unauthed → 401
 
 ## 7. Phase 1 — Frontend
 
-- [ ] 7.1 Add an "Import from URL" block at the top of `src/app/recipes/new/page.tsx` (visible to authenticated contributors only): URL input, Import button, loading state, inline error
-- [ ] 7.2 On successful import, populate `RecipeForm` `initialData` with the response (verify the existing `initialData` shape matches what the import returns; adjust the import response shape if needed rather than the form prop)
-- [ ] 7.3 On import failure, render the empty form so manual entry still works
+- [x] 7.1 Add an "Import from URL" block at the top of `src/app/recipes/new/page.tsx` (visible to authenticated contributors only): URL input, Import button, loading state, inline error
+- [x] 7.2 On successful import, populate `RecipeForm` `initialData` with the response (verify the existing `initialData` shape matches what the import returns; adjust the import response shape if needed rather than the form prop)
+- [x] 7.3 On import failure, render the empty form so manual entry still works
 - [ ] 7.4 Manual test: paste 3 real recipe URLs including `mykoreankitchen.com/kimchi-jjigae` — confirm each pre-fills the form correctly and saves through the normal create-recipe path
 
 ## 8. Phase 1 — Ship
 
-- [ ] 8.1 Run lint + full jest suite locally — green
+- [x] 8.1 Run lint + full jest suite locally — green
 - [ ] 8.2 Deploy to Fly; smoke-test the endpoint against one real URL in production
 - [ ] 8.3 Merge `change/import-recipe-from-url` Phase-1 commits to main and `git push`
 - [ ] 8.4 **Checkpoint with the user before starting Phase 2** — confirm Phase 1 is acceptable and Phase 2 spike should run

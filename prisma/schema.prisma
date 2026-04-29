@@ -36,10 +36,10 @@ model RecipeTag {
 }
 
 model Photo {
-  id        String @id @default(uuid())
+  id        String  @id @default(uuid())
   url       String
   alt       String?
-  sortOrder Int    @default(0)
-  recipeId  String
-  recipe    Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+  recipeId  String?
+  recipe    Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
