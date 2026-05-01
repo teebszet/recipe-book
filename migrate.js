@@ -16,16 +16,27 @@ if (!fs.existsSync(dir)) {
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
-// Check if tables already exist
-const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='Recipe'").get();
-if (tables) {
-  console.log('Database already migrated');
-  db.close();
-  process.exit(0);
+// Track applied migrations in a simple table
+db.exec(`CREATE TABLE IF NOT EXISTS _applied_migrations (name TEXT PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT (datetime('now')))`);
+
+const migrations = [
+  { name: '20260415014219_init', file: 'prisma/migrations/20260415014219_init/migration.sql' },
+  { name: '20260429000000_photo_optional_recipe', file: 'prisma/migrations/20260429000000_photo_optional_recipe/migration.sql' },
+];
+
+const getApplied = db.prepare("SELECT name FROM _applied_migrations WHERE name = ?");
+const markApplied = db.prepare("INSERT INTO _applied_migrations (name) VALUES (?)");
+
+for (const migration of migrations) {
+  if (getApplied.get(migration.name)) {
+    console.log(`Migration ${migration.name} already applied`);
+    continue;
+  }
+  console.log(`Applying migration ${migration.name}...`);
+  const sql = fs.readFileSync(path.join(__dirname, migration.file), 'utf-8');
+  db.exec(sql);
+  markApplied.run(migration.name);
+  console.log(`Applied ${migration.name}`);
 }
 
-console.log('Running initial migration...');
-const sql = fs.readFileSync(path.join(__dirname, 'prisma/migrations/20260415014219_init/migration.sql'), 'utf-8');
-db.exec(sql);
-console.log('Migration complete');
 db.close();
