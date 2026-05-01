@@ -1,4 +1,4 @@
-# Recipe Book
+# food le pop
 
 A personal recipe collection app built with Next.js, Prisma, and SQLite.
 
