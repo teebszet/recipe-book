@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { Header } from "@/components/Header";
 import { AuthModal } from "@/components/AuthModal";
+import { APP_NAME } from "@/lib/branding";
 
 const notoSerif = Noto_Serif({
   variable: "--font-noto-serif",
@@ -18,8 +19,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Recipe Book",
-  description: "A family recipe collection",
+  title: APP_NAME,
+  description: `${APP_NAME} — a family recipe collection`,
 };
 
 export default function RootLayout({

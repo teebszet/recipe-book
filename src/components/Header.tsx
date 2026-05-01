@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { APP_NAME } from "@/lib/branding";
 
 export function Header() {
   const router = useRouter();
@@ -24,7 +25,7 @@ export function Header() {
           href="/"
           className="font-serif text-xl text-primary whitespace-nowrap"
         >
-          Recipe Book
+          {APP_NAME}
         </Link>
 
         <form onSubmit={handleSearch} className="flex-1 max-w-md">
